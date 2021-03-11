@@ -33,6 +33,8 @@ import io.delta.standalone.internal.DeltaLogImpl;
  */
 public interface DeltaLog {
 
+    OptimisticTransaction startTransaction();
+
     /**
      * @return the current {@link Snapshot} of the Delta table. You may need to call
      * {@link #update()} to access the latest snapshot if the current snapshot is stale.

@@ -30,7 +30,7 @@ import java.util.Objects;
  *
  * @see  <a href="https://github.com/delta-io/delta/blob/master/PROTOCOL.md">Delta Transaction Log Protocol</a>
  */
-public final class AddFile {
+public final class AddFile implements Action {
     private final String path;
     private final Map<String, String> partitionValues;
     private final long size;
@@ -126,5 +126,10 @@ public final class AddFile {
     @Override
     public int hashCode() {
         return Objects.hash(path, partitionValues, size, modificationTime, dataChange, stats, tags);
+    }
+
+    @Override
+    public SingleAction wrap() {
+        return new SingleAction(this);
     }
 }

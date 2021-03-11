@@ -22,7 +22,7 @@ import com.fasterxml.jackson.module.scala.DefaultScalaModule
 import com.fasterxml.jackson.module.scala.experimental.ScalaObjectMapper
 
 /** Useful json functions used around the Delta codebase. */
-private[internal] object JsonUtils {
+object JsonUtils {
   // scalastyle:off
   /**
    * Used to convert between classes and JSON. Use `lazy` so that it's easier to see the real

@@ -18,12 +18,11 @@ package io.delta.standalone.internal
 
 import java.io.File
 import java.util.concurrent.locks.ReentrantLock
-
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.Path
 import io.delta.standalone.DeltaLog
 import io.delta.standalone.actions.{CommitInfo => CommitInfoJ}
-import io.delta.standalone.internal.storage.HDFSReadOnlyLogStore
+import io.delta.standalone.internal.storage.{HDFSReadOnlyLogStore, LogStore, S3SingleDriverLogStore}
 import io.delta.standalone.internal.util.ConversionUtils
 
 /**
@@ -32,13 +31,14 @@ import io.delta.standalone.internal.util.ConversionUtils
 private[internal] class DeltaLogImpl private(
     val hadoopConf: Configuration,
     val logPath: Path,
-    val dataPath: Path)
+    val dataPath: Path,
+    val logStore: LogStore)
   extends DeltaLog
   with Checkpoints
   with SnapshotManagement {
 
   /** Used to read (not write) physical log files and checkpoints. */
-  lazy val store = new HDFSReadOnlyLogStore(hadoopConf)
+  lazy val store = logStore
 
   /** Use ReentrantLock to allow us to call `lockInterruptibly`. */
   private val deltaLogLock = new ReentrantLock()
@@ -80,6 +80,11 @@ private[standalone] object DeltaLogImpl {
     val fs = rawPath.getFileSystem(hadoopConf)
     val path = fs.makeQualified(rawPath)
 
-    new DeltaLogImpl(hadoopConf, path, path.getParent)
+    val scheme = rawPath.toUri.getScheme
+    if (scheme.matches("s3[an]?$")) {
+      new DeltaLogImpl(hadoopConf, path, path.getParent, new S3SingleDriverLogStore(hadoopConf))
+    } else {
+      new DeltaLogImpl(hadoopConf, path, path.getParent, new HDFSReadOnlyLogStore(hadoopConf))
+    }
   }
 }
